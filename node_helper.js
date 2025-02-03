@@ -18,12 +18,12 @@ module.exports = NodeHelper.create({
   },
 
   async _fetchTemperatureData() {
-    console.log("[MMM-RemoteTemperature] Fetching temperature data...");
+    console.log("[MMM-RemoteTemperature] Fetching temperatureerature data...");
 
     const results = {};
 
     for (const device of this.devices) {
-      const url = `http://${device.host}:${device.port}/temperature`; // Target API URL
+      const url = `http://${device.host}:${device.port}/temperatureerature`; // Target API URL
 
       try {
         console.log(`[MMM-RemoteTemperature] Requesting data from ${url}...`);
@@ -32,7 +32,7 @@ module.exports = NodeHelper.create({
         console.log(`[MMM-RemoteTemperature] Response from ${device.host}:`, response.data);
 
         results[device.host] = {
-          temp: response.data.temp ?? "N/A",
+          temperature: response.data.temperature ?? "N/A",
           humidity: response.data.humidity ?? "N/A",
           battery: response.data.battery ?? "N/A",
           timestamp: Date.now(),
