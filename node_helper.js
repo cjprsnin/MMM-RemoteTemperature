@@ -25,6 +25,8 @@ module.exports = NodeHelper.create({
     console.log("[MMM-RemoteTemperature] Fetching temperature data...");
 
     const results = {};
+    let totalTemperature = 0;
+    let deviceCount = 0;
 
     for (const device of this.devices) {
       const url = `http://${device.host}:${device.port}/temperature`; // Target API URL
@@ -45,11 +47,13 @@ module.exports = NodeHelper.create({
         // Round the temperature to 2 decimal places
         temperature = this._roundToTwoDecimalPlaces(temperature);
 
+        // Add the temperature to the total for average calculation
+        totalTemperature += temperature;
+        deviceCount++;
+
+        // Store only the temperature (no additional data)
         results[device.host] = {
-          temperature: temperature ?? "N/A",
-          humidity: response.data.humidity ?? "N/A",
-          battery: response.data.battery ?? "N/A",
-          timestamp: Date.now(),
+          temperature: temperature ?? "N/A"
         };
 
       } catch (error) {
@@ -61,13 +65,19 @@ module.exports = NodeHelper.create({
     console.log("[MMM-RemoteTemperature] Final fetched data:", results);
     this.viewModel = results;
 
-    // Emit a single notification with all devices' data
-    this.sendSocketNotification("INDOOR_TEMPERATURE", {
-      devices: results, // All devices' data in one payload
-      timestamp: Date.now(),
-    });
+    // Calculate the average temperature if there are devices with valid data
+    let averageTemperature = "N/A";
+    if (deviceCount > 0) {
+      averageTemperature = this._roundToTwoDecimalPlaces(totalTemperature / deviceCount);
+    }
 
-    // Emit the standard notification for display
+    // Send only the rounded average temperature as the payload
+    this.indoorTemperature = averageTemperature;
+
+    // Emit the single rounded temperature as the INDOOR_TEMPERATURE notification
+    this.sendSocketNotification("INDOOR_TEMPERATURE", this.roundValue(this.indoorTemperature));
+
+    // Emit the standard notification for display (optional)
     this.sendSocketNotification("MMM-RemoteTemperature.VALUE_RECEIVED", this.viewModel);
   },
 
@@ -79,5 +89,11 @@ module.exports = NodeHelper.create({
   // Helper function to round the temperature to 2 decimal places
   _roundToTwoDecimalPlaces(value) {
     return Math.round(value * 100) / 100; // Multiply by 100, round, then divide by 100
+  },
+
+  // Round a value as per the config (rounding to 1 or 2 decimal places)
+  roundValue(value) {
+    const decimals = 2; // You can change this value if you want to round to a different decimal place
+    return Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
   }
 });
