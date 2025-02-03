@@ -1,83 +1,190 @@
 const NodeHelper = require("node_helper");
 const axios = require("axios");
+const cheerio = require("cheerio");
 
 module.exports = NodeHelper.create({
-  start() {
-    console.log("[MMM-RemoteTemperature] Node Helper Started.");
-    this.devices = [];
-    this.viewModel = {};
-    this.units = "metric"; // Default to metric (Celsius)
-    this.fetchInterval = 60000; // Default interval (60 seconds)
-  },
+    start() {
+        this.config = null;
+        this.cache = {
+            weather: {
+                data: null,
+                timestamp: null,
+                ttl: 10 * 60 * 1000 // 10 minutes
+            },
+            holidays: {
+                data: null,
+                timestamp: null,
+                ttl: 24 * 60 * 60 * 1000 // 24 hours
+            }
+        };
+    },
 
-  socketNotificationReceived(notificationName, payload) {
-    if (notificationName === "MMM-RemoteTemperature.INIT") {
-      console.log("[MMM-RemoteTemperature] Received INIT request. Devices:", payload.devices);
-      this.devices = payload.devices;
-
-      // Set the units from the frontend config (either 'imperial' or 'metric')
-      this.units = payload.units === "imperial" ? "imperial" : "metric"; // 'imperial' -> Fahrenheit, 'metric' -> Celsius
-
-      // Use the fetchInterval provided in the config or default to 60 seconds
-      this.fetchInterval = payload.fetchInterval || 60000; // Default to 60000ms (60 seconds)
-
-      this._fetchTemperatureData(); // Initial fetch
-      setInterval(() => this._fetchTemperatureData(), this.fetchInterval); // Fetch at the configured interval
-    }
-  },
-
-async _fetchTemperatureData() {
-    console.log("[MMM-RemoteTemperature] Fetching temperature data...");
-
-    const results = {};
-    let totalTemperature = 0;
-    let deviceCount = 0;
-
-    for (const device of this.devices) {
-      const url = `http://${device.host}:${device.port}/temperature`; // Target API URL
-
-      try {
-        const response = await axios.get(url, { timeout: 5000 }); // 5s timeout
-
-        let temperature = response.data.temperature;
-        
-        if (this.units === "imperial") {
-          // Convert to Fahrenheit if units are imperial
-          temperature = this._convertToFahrenheit(temperature);
+    socketNotificationReceived(notification, payload) {
+        switch (notification) {
+            case "INIT_CONFIG":
+                this.config = payload;
+                break;
+            case "API-FETCH":
+                this.handleWeatherRequest(payload);
+                break;
+            case "HOLIDAY-FETCH":
+                this.handleHolidayRequest(payload);
+                break;
         }
+    },
 
-        // Round the temperature to 2 decimal places
-        temperature = this._roundToTwoDecimalPlaces(temperature);
+    async handleWeatherRequest(url) {
+        try {
+            if (this.isCacheValid("weather")) {
+                this.sendWeatherData(this.cache.weather.data);
+                return;
+            }
 
-        // Add the temperature to the total for average calculation
-        totalTemperature += temperature;
-        deviceCount++;
+            const response = await this.retryableRequest(() => 
+                axios.get(url, { timeout: 5000 })
+            );
 
-        // Store only the temperature (no additional data)
-        results[device.host] = {
-          temperature: temperature ?? "N/A"
+            this.cacheWeatherData(response.data);
+            this.sendWeatherData(response.data);
+        } catch (error) {
+            this.handleWeatherError(error, url);
+        }
+    },
+
+    async handleHolidayRequest(url) {
+        try {
+            if (this.isCacheValid("holidays")) {
+                this.sendHolidayData(this.cache.holidays.data);
+                return;
+            }
+
+            const response = await this.retryableRequest(() => 
+                axios.get(url, { timeout: 5000 })
+            );
+
+            const holidays = this.parseHolidays(response.data);
+            this.cacheHolidayData(holidays);
+            this.sendHolidayData(holidays);
+        } catch (error) {
+            this.handleHolidayError(error, url);
+        }
+    },
+
+    parseHolidays(html) {
+        try {
+            const $ = cheerio.load(html);
+            const holidays = [];
+
+            $("#holidays-table tr[data-date]").each((i, row) => {
+                const dateStr = $(row).attr("data-date");
+                const date = new Date(dateStr);
+                
+                $(row).find(".holiday-name").each((j, cell) => {
+                    holidays.push({
+                        name: $(cell).text().trim(),
+                        date: date.toISOString()
+                    });
+                });
+            });
+
+            return holidays;
+        } catch (error) {
+            throw new Error(`Failed to parse holidays: ${error.message}`);
+        }
+    },
+
+    async retryableRequest(requestFn, retries = 3, delay = 1000) {
+        try {
+            return await requestFn();
+        } catch (error) {
+            if (retries > 0) {
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return this.retryableRequest(requestFn, retries - 1, delay * 2);
+            }
+            throw error;
+        }
+    },
+
+    isCacheValid(type) {
+        return (
+            this.cache[type].data &&
+            Date.now() - this.cache[type].timestamp < this.cache[type].ttl
+        );
+    },
+
+    cacheWeatherData(data) {
+        this.cache.weather = {
+            data,
+            timestamp: Date.now(),
+            ttl: this.config?.weatherCacheTTL || 10 * 60 * 1000
+        };
+    },
+
+    cacheHolidayData(data) {
+        this.cache.holidays = {
+            data,
+            timestamp: Date.now(),
+            ttl: this.config?.holidayCacheTTL || 24 * 60 * 60 * 1000
+        };
+    },
+
+    sendWeatherData(data) {
+        this.sendSocketNotification("API-RESPONSE", {
+            success: true,
+            data: this.transformWeatherData(data),
+            cached: this.isCacheValid("weather")
+        });
+    },
+
+    sendHolidayData(data) {
+        this.sendSocketNotification("HOLIDAY-RESPONSE", {
+            success: true,
+            data,
+            cached: this.isCacheValid("holidays")
+        });
+    },
+
+    transformWeatherData(rawData) {
+        return {
+            temp: rawData.main?.temp,
+            humidity: rawData.main?.humidity,
+            code: rawData.weather?.[0]?.id,
+            description: rawData.weather?.[0]?.description,
+            windSpeed: rawData.wind?.speed,
+            sunrise: rawData.sys?.sunrise,
+            sunset: rawData.sys?.sunset,
+            timestamp: Date.now()
+        };
+    },
+
+    handleWeatherError(error, url) {
+        const errorInfo = {
+            message: "Weather data fetch failed",
+            url,
+            code: error.code,
+            status: error.response?.status,
+            retryIn: this.config?.retryInterval || 5000
         };
 
-      } catch (error) {
-        console.error(`[MMM-RemoteTemperature] ERROR fetching from ${url}:`, error.message);
-        results[device.host] = { error: "Unavailable" };
-      }
+        console.error(`[MMM-DynamicWeather] ${errorInfo.message}:`, errorInfo);
+        this.sendSocketNotification("API-RESPONSE", {
+            success: false,
+            error: errorInfo
+        });
+    },
+
+    handleHolidayError(error, url) {
+        const errorInfo = {
+            message: "Holiday data fetch failed",
+            url,
+            code: error.code,
+            status: error.response?.status
+        };
+
+        console.error(`[MMM-DynamicWeather] ${errorInfo.message}:`, errorInfo);
+        this.sendSocketNotification("HOLIDAY-RESPONSE", {
+            success: false,
+            error: errorInfo
+        });
     }
-
-    this.viewModel = results;
-
-    // Calculate the average temperature if there are devices with valid data
-    let averageTemperature = "N/A";
-    if (deviceCount > 0) {
-      averageTemperature = this._roundToTwoDecimalPlaces(totalTemperature / deviceCount);
-    }
-
-    // Emit the average indoor temperature first
-    this.sendSocketNotification("INDOOR_TEMPERATURE", {
-      temperature: this._roundToTwoDecimalPlaces(averageTemperature),
-    });
-    console.log("[MMM-RemoteTemperature] Sending INDOOR_TEMPERATURE notification:", averageTemperature);
-
-    // Emit the full device data afterward
-    this.sendSocketNotification("MMM-RemoteTemperature.VALUE_RECEIVED", this.viewModel);
-  },
+});
