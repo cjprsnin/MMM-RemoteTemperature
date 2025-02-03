@@ -26,7 +26,7 @@ module.exports = NodeHelper.create({
     }
   },
 
-  async _fetchTemperatureData() {
+async _fetchTemperatureData() {
     console.log("[MMM-RemoteTemperature] Fetching temperature data...");
 
     const results = {};
@@ -37,7 +37,6 @@ module.exports = NodeHelper.create({
       const url = `http://${device.host}:${device.port}/temperature`; // Target API URL
 
       try {
-        
         const response = await axios.get(url, { timeout: 5000 }); // 5s timeout
 
         let temperature = response.data.temperature;
@@ -73,32 +72,12 @@ module.exports = NodeHelper.create({
       averageTemperature = this._roundToTwoDecimalPlaces(totalTemperature / deviceCount);
     }
 
-    // Send only the rounded average temperature as the payload
-    this.indoorTemperature = averageTemperature;
-
-    // Emit the single rounded temperature as the INDOOR_TEMPERATURE notification
+    // Emit the average indoor temperature first
     this.sendSocketNotification("INDOOR_TEMPERATURE", {
-      temperature: this._roundToTwoDecimalPlaces(averageTemperature),  // Corrected variable name
+      temperature: this._roundToTwoDecimalPlaces(averageTemperature),
     });
     console.log("[MMM-RemoteTemperature] Sending INDOOR_TEMPERATURE notification:", averageTemperature);
-    
-    // Emit the standard notification for display (optional)
+
+    // Emit the full device data afterward
     this.sendSocketNotification("MMM-RemoteTemperature.VALUE_RECEIVED", this.viewModel);
   },
-
-  // Helper function to convert Celsius to Fahrenheit
-  _convertToFahrenheit(celsius) {
-    return (celsius * 9/5) + 32;
-  },
-
-  // Helper function to round the temperature to 2 decimal places
-  _roundToTwoDecimalPlaces(value) {
-    return Math.round(value * 100) / 100; // Multiply by 100, round, then divide by 100
-  },
-
-  // Round a value as per the config (rounding to 1 or 2 decimal places)
-  roundValue(value) {
-    const decimals = 2; // You can change this value if you want to round to a different decimal place
-    return Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
-  }
-});
