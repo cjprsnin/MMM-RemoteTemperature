@@ -1,13 +1,13 @@
 /* global Module, moment */
 
 /* Magic Mirror Module: MMM-RemoteTemperature (https://github.com/balassy/MMM-RemoteTemperature)
- * By György Balássy (https://www.linkedin.com/in/balassy)
+ * By GyÃƒÂ¶rgy BalÃƒÂ¡ssy (https://www.linkedin.com/in/balassy)
  * MIT Licensed.
  */
 
 Module.register('MMM-RemoteTemperature', {
   defaults: {
-    sensorId: null,
+    //sensorId: null,
     icon: 'home',
     showMore: true
   },
@@ -91,7 +91,7 @@ Module.register('MMM-RemoteTemperature', {
 
   socketNotificationReceived(notificationName, payload) {
     if (notificationName === 'MMM-RemoteTemperature.VALUE_RECEIVED' && payload) {
-      if (!this.config.sensorId || (this.config.sensorId && this.config.sensorId === payload.sensorId)) {
+      //if (!this.config.sensorId || (this.config.sensorId && this.config.sensorId === payload.sensorId)) {
         this.viewModel = {
           temp: payload.temp,
           humidity: payload.humidity,
@@ -106,7 +106,7 @@ Module.register('MMM-RemoteTemperature', {
 
   _initCommunication() {
     this.sendSocketNotification('MMM-RemoteTemperature.INIT', {
-      sensorId: this.config.sensorId
+      //sensorId: this.config.sensorId
     });
   },
 
