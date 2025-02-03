@@ -1,116 +1,90 @@
-/* global Module, moment */
+/* global Module */
 
-/* Magic Mirror Module: MMM-RemoteTemperature (https://github.com/balassy/MMM-RemoteTemperature)
- * By GyÃƒÂ¶rgy BalÃƒÂ¡ssy (https://www.linkedin.com/in/balassy)
- * MIT Licensed.
- */
-
-Module.register('MMM-RemoteTemperature', {
+Module.register("MMM-RemoteTemperature", {
   defaults: {
-    //sensorId: null,
-    icon: 'home',
-    showMore: true
+    devices: [],
+    icon: "thermometer-half",
+    showMore: true,
+    showHumidity: false,
+    showBattery: true,
+    showTime: false,
+    showAlerts: true,
   },
 
-  requiresVersion: '2.1.0',
-
-  getScripts() {
-    return [
-      'moment.js'
-    ];
-  },
-
-  getStyles() {
-    return [
-      'MMM-RemoteTemperature.css',
-      'font-awesome.css',
-      'font-awesome5.css'
-    ];
-  },
-
-  getTranslations() {
-    return {
-      en: 'translations/en.json',
-      hu: 'translations/hu.json'
-    };
-  },
+  requiresVersion: "2.1.0",
 
   start() {
-    this.viewModel = null;
-    this._initCommunication();
+    this.viewModel = {};
+    this.sendSocketNotification("MMM-RemoteTemperature.INIT", this.config);
   },
 
   getDom() {
-    const wrapper = document.createElement('div');
+    const wrapper = document.createElement("div");
 
-    if (this.viewModel) {
-      const firstLineEl = document.createElement('div');
+    if (Object.keys(this.viewModel).length === 0) {
+      wrapper.innerHTML = this.translate("LOADING");
+      wrapper.classList = "dimmed small";
+      return wrapper;
+    }
+
+    this.config.devices.forEach((device) => {
+      const deviceData = this.viewModel[device.host];
+      const deviceWrapper = document.createElement("div");
+      deviceWrapper.classList = "device-container";
+
+      const firstLineEl = document.createElement("div");
 
       if (this.config.icon) {
-        const iconEl = document.createElement('span');
+        const iconEl = document.createElement("span");
         iconEl.classList = `symbol fa fa-${this.config.icon}`;
         firstLineEl.appendChild(iconEl);
       }
 
-      if (this.viewModel.temp) {
-        const tempEl = document.createElement('span');
-        tempEl.classList = 'temp';
-        tempEl.innerHTML = `${this.viewModel.temp}&deg;`;
+      const nameEl = document.createElement("span");
+      nameEl.classList = "device-name";
+      nameEl.innerHTML = `${device.name}: `;
+      firstLineEl.appendChild(nameEl);
+
+      if (deviceData && deviceData.temp !== undefined) {
+        const tempEl = document.createElement("span");
+        tempEl.classList = "temp";
+        tempEl.innerHTML = `${deviceData.temp}&deg;C`;
         firstLineEl.appendChild(tempEl);
+      } else {
+        firstLineEl.innerHTML += " No data";
       }
 
-      if (this.viewModel.humidity) {
-        const humidityEl = document.createElement('span');
-        humidityEl.classList = 'humidity';
-        humidityEl.innerHTML = `${this.viewModel.humidity}%`;
-        firstLineEl.appendChild(humidityEl);
-      }
+      deviceWrapper.appendChild(firstLineEl);
 
-      wrapper.appendChild(firstLineEl);
+      if (this.config.showMore && deviceData) {
+        const secondLineEl = document.createElement("div");
+        secondLineEl.classList = "more dimmed small";
 
-      if (this.config.showMore) {
-        const secondLineEl = document.createElement('div');
-        secondLineEl.classList = 'more dimmed small';
-        secondLineEl.innerHTML = `<span class="fa fa-refresh"></span> ${this._formatTimestamp(this.viewModel.timestamp)}`;
-
-        if (this.viewModel.battery) {
-          secondLineEl.innerHTML += `<span class="fa fa-battery-half"></span> ${this.viewModel.battery}%`;
+        if (this.config.showHumidity && deviceData.humidity !== undefined) {
+          secondLineEl.innerHTML += `<span class="fa fa-tint"></span> ${deviceData.humidity}% `;
         }
 
-        wrapper.appendChild(secondLineEl);
+        if (this.config.showBattery && deviceData.battery !== undefined) {
+          secondLineEl.innerHTML += `<span class="fa fa-battery-half"></span> ${deviceData.battery}% `;
+        }
+
+        if (this.config.showTime && deviceData.timestamp) {
+          secondLineEl.innerHTML += `<span class="fa fa-clock"></span> ${moment(deviceData.timestamp).format("HH:mm")}`;
+        }
+
+        deviceWrapper.appendChild(secondLineEl);
       }
-    } else {
-      const loadingEl = document.createElement('span');
-      loadingEl.innerHTML = this.translate('LOADING');
-      loadingEl.classList = 'dimmed small';
-      wrapper.appendChild(loadingEl);
-    }
+
+      wrapper.appendChild(deviceWrapper);
+    });
 
     return wrapper;
   },
 
   socketNotificationReceived(notificationName, payload) {
-    if (notificationName === 'MMM-RemoteTemperature.VALUE_RECEIVED' && payload) {
-      //if (!this.config.sensorId || (this.config.sensorId && this.config.sensorId === payload.sensorId)) {
-        this.viewModel = {
-          temp: payload.temp,
-          humidity: payload.humidity,
-          battery: payload.battery,
-          timestamp: Date.now()
-        };
-
-        this.updateDom();
-      }
+    if (notificationName === "MMM-RemoteTemperature.VALUE_RECEIVED") {
+      this.viewModel = payload;
+      this.updateDom();
     }
-  },
-
-  _initCommunication() {
-    this.sendSocketNotification('MMM-RemoteTemperature.INIT', {
-      //sensorId: this.config.sensorId
-    });
-  },
-
-  _formatTimestamp(timestamp) {
-    return moment(timestamp).format('HH:mm');
   }
 });
