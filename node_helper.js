@@ -32,10 +32,8 @@ module.exports = NodeHelper.create({
       const url = `http://${device.host}:${device.port}/temperature`; // Target API URL
 
       try {
-        console.log(`[MMM-RemoteTemperature] Requesting data from ${url}...`);
         
         const response = await axios.get(url, { timeout: 5000 }); // 5s timeout
-        console.log(`[MMM-RemoteTemperature] Response from ${device.host}:`, response.data);
 
         let temperature = response.data.temperature;
         
@@ -75,9 +73,9 @@ module.exports = NodeHelper.create({
 
     // Emit the single rounded temperature as the INDOOR_TEMPERATURE notification
     this.sendSocketNotification("INDOOR_TEMPERATURE", {
-    temperature: this._roundToTwoDecimalPlaces(aggregatedTemperature),
+    temperature: this._roundToTwoDecimalPlaces(averageTemperature),  // Corrected variable name
     });
-    console.log("[MMM-RemoteTemperature] Sending INDOOR_TEMPERATURE notification:", aggregatedTemperature);
+    console.log("[MMM-RemoteTemperature] Sending INDOOR_TEMPERATURE notification:", averageTemperature);
     
     // Emit the standard notification for display (optional)
     this.sendSocketNotification("MMM-RemoteTemperature.VALUE_RECEIVED", this.viewModel);
