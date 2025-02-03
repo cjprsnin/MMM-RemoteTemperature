@@ -1,47 +1,41 @@
-const bodyParser = require('body-parser');
-const NodeHelper = require('node_helper'); // eslint-disable-line import/no-unresolved
+const NodeHelper = require("node_helper");
+const axios = require("axios");
 
 module.exports = NodeHelper.create({
   start() {
-    this.lastTemperatureData = null; // Store the latest received temperature data
-    this._initHandler();
+    this.devices = [];
+    this.viewModel = {};
   },
 
   socketNotificationReceived(notificationName, payload) {
-    if (notificationName === 'MMM-RemoteTemperature.INIT') {
-      console.log(`MMM-RemoteTemperature Node helper: Init notification received.`); // eslint-disable-line no-console
+    if (notificationName === "MMM-RemoteTemperature.INIT") {
+      this.devices = payload.devices;
+      this._fetchTemperatureData();
+      setInterval(() => this._fetchTemperatureData(), 60000); // Refresh every minute
     }
   },
 
-  _initHandler() {
-    this.expressApp.use(bodyParser.json());
+  async _fetchTemperatureData() {
+    const results = {};
 
-    // Handle POST requests (keep existing functionality)
-    this.expressApp.post('/remote-temperature', this._onTemperatureValueReceived.bind(this));
+    for (const device of this.devices) {
+      try {
+        const url = `http://${device.host}:${device.port}/temperature`; // Updated endpoint
+        const response = await axios.get(url);
 
-    // Handle GET requests (new functionality)
-    this.expressApp.get('/remote-temperature', this._onTemperatureValueRequested.bind(this));
-  },
-
-  _onTemperatureValueReceived(req, res) {
-    const params = req.body;
-
-    this.lastTemperatureData = {
-      temp: params.temp,
-      humidity: params.humidity,
-      battery: params.battery,
-      timestamp: Date.now()
-    };
-
-    this.sendSocketNotification('MMM-RemoteTemperature.VALUE_RECEIVED', this.lastTemperatureData);
-    res.sendStatus(200);
-  },
-
-  _onTemperatureValueRequested(req, res) {
-    if (this.lastTemperatureData) {
-      res.json(this.lastTemperatureData);
-    } else {
-      res.status(404).json({ error: 'No temperature data available' });
+        results[device.host] = {
+          temp: response.data.temp,
+          humidity: response.data.humidity,
+          battery: response.data.battery,
+          timestamp: Date.now(),
+        };
+      } catch (error) {
+        console.error(`Error fetching temperature from ${device.host}:`, error.message);
+        results[device.host] = { error: "Unavailable" };
+      }
     }
+
+    this.viewModel = results;
+    this.sendSocketNotification("MMM-RemoteTemperature.VALUE_RECEIVED", this.viewModel);
   }
 });
