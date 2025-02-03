@@ -51,6 +51,13 @@ module.exports = NodeHelper.create({
           battery: response.data.battery ?? "N/A",
           timestamp: Date.now(),
         };
+
+        // Emit the INDOOR_TEMPERATURE notification
+        this.sendSocketNotification("INDOOR_TEMPERATURE", {
+          temperature: temperature,
+          timestamp: Date.now(),
+        });
+
       } catch (error) {
         console.error(`[MMM-RemoteTemperature] ERROR fetching from ${url}:`, error.message);
         results[device.host] = { error: "Unavailable" };
