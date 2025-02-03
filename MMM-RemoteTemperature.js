@@ -7,18 +7,30 @@ Module.register("MMM-RemoteTemperature", {
     showBattery: true,
     showTime: false,
     showAlerts: true,
-    units: "imperial",  // Ensure this is globally set for consistency across the module
+    units: "imperial",  // Ensure this is globally set
+    fetchInterval: 60000, // Default fetch interval is 60 seconds
   },
 
   requiresVersion: "2.1.0",  // Make sure the MagicMirror version is compatible with your module
 
   start() {
     this.viewModel = {};
+    
     // Send the initialization signal to the backend with the units setting and devices configuration
     this.sendSocketNotification("MMM-RemoteTemperature.INIT", {
       devices: this.config.devices,
       units: this.config.units // Ensure the backend gets the globally configured units
     });
+    
+    // Set an interval to fetch temperature data based on the user-configured interval
+    setInterval(() => this._fetchTemperatureData(), this.config.fetchInterval);
+  },
+
+  // Method to fetch temperature data
+  _fetchTemperatureData() {
+    console.log("Fetching temperature data...");
+    // Add your data fetching logic here (e.g., sending a socket notification to fetch the latest data)
+    this.sendSocketNotification("MMM-RemoteTemperature.FETCH_DATA");
   },
 
   getDom() {
