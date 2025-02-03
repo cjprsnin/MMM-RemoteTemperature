@@ -7,13 +7,17 @@ Module.register("MMM-RemoteTemperature", {
     showBattery: true,
     showTime: false,
     showAlerts: true,
+    units: "imperial",  // Ensure this is globally set
   },
 
   requiresVersion: "2.1.0",
 
   start() {
     this.viewModel = {};
-    this.sendSocketNotification("MMM-RemoteTemperature.INIT", this.config);
+    this.sendSocketNotification("MMM-RemoteTemperature.INIT", {
+      devices: this.config.devices,
+      units: this.config.units // Pass the global units setting to the backend
+    });
   },
 
   getDom() {
