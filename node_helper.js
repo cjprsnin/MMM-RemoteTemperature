@@ -42,6 +42,9 @@ module.exports = NodeHelper.create({
           temperature = this._convertToFahrenheit(temperature);
         }
 
+        // Round the temperature to 2 decimal places
+        temperature = this._roundToTwoDecimalPlaces(temperature);
+
         results[device.host] = {
           temperature: temperature ?? "N/A",
           humidity: response.data.humidity ?? "N/A",
@@ -62,5 +65,10 @@ module.exports = NodeHelper.create({
   // Helper function to convert Celsius to Fahrenheit
   _convertToFahrenheit(celsius) {
     return (celsius * 9/5) + 32;
+  },
+
+  // Helper function to round the temperature to 2 decimal places
+  _roundToTwoDecimalPlaces(value) {
+    return Math.round(value * 100) / 100; // Multiply by 100, round, then divide by 100
   }
 });
