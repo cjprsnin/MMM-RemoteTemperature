@@ -62,7 +62,6 @@ module.exports = NodeHelper.create({
       }
     }
 
-    console.log("[MMM-RemoteTemperature] Final fetched data:", results);
     this.viewModel = results;
 
     // Calculate the average temperature if there are devices with valid data
@@ -75,8 +74,11 @@ module.exports = NodeHelper.create({
     this.indoorTemperature = averageTemperature;
 
     // Emit the single rounded temperature as the INDOOR_TEMPERATURE notification
-    this.sendSocketNotification("INDOOR_TEMPERATURE", this.roundValue(this.indoorTemperature));
-
+    this.sendSocketNotification("INDOOR_TEMPERATURE", {
+    temperature: this._roundToTwoDecimalPlaces(aggregatedTemperature),
+    });
+    console.log("[MMM-RemoteTemperature] Sending INDOOR_TEMPERATURE notification:", aggregatedTemperature);
+    
     // Emit the standard notification for display (optional)
     this.sendSocketNotification("MMM-RemoteTemperature.VALUE_RECEIVED", this.viewModel);
   },
