@@ -1,6 +1,5 @@
 const NodeHelper = require("node_helper");
 const axios = require("axios");
-const os = require("os");
 
 module.exports = NodeHelper.create({
   start() {
@@ -15,8 +14,8 @@ module.exports = NodeHelper.create({
       console.log("[MMM-RemoteTemperature] Received INIT request. Devices:", payload.devices);
       this.devices = payload.devices;
 
-      // Check for units config from the module and adjust the unit system
-      this.units = payload.units === "imperial" ? "imperial" : "metric"; // "imperial" -> Fahrenheit, "metric" -> Celsius
+      // Set the units from the frontend config (either 'imperial' or 'metric')
+      this.units = payload.units === "imperial" ? "imperial" : "metric"; // 'imperial' -> Fahrenheit, 'metric' -> Celsius
       this._fetchTemperatureData(); // Initial fetch
       setInterval(() => this._fetchTemperatureData(), 60000); // Fetch every 60 seconds
     }
