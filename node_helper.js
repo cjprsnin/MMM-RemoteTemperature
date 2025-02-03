@@ -7,13 +7,16 @@ module.exports = NodeHelper.create({
     console.log("[MMM-RemoteTemperature] Node Helper Started.");
     this.devices = [];
     this.viewModel = {};
-    this.useFahrenheit = this._shouldUseFahrenheit(); // Automatically determine if Fahrenheit should be used
+    this.units = "metric"; // Default to metric (Celsius)
   },
 
   socketNotificationReceived(notificationName, payload) {
     if (notificationName === "MMM-RemoteTemperature.INIT") {
       console.log("[MMM-RemoteTemperature] Received INIT request. Devices:", payload.devices);
       this.devices = payload.devices;
+
+      // Check for units config from the module and adjust the unit system
+      this.units = payload.units === "imperial" ? "imperial" : "metric"; // "imperial" -> Fahrenheit, "metric" -> Celsius
       this._fetchTemperatureData(); // Initial fetch
       setInterval(() => this._fetchTemperatureData(), 60000); // Fetch every 60 seconds
     }
@@ -33,10 +36,12 @@ module.exports = NodeHelper.create({
         const response = await axios.get(url, { timeout: 5000 }); // 5s timeout
         console.log(`[MMM-RemoteTemperature] Response from ${device.host}:`, response.data);
 
-        // Convert to Fahrenheit if needed
-        const temperature = this.useFahrenheit
-          ? this._convertToFahrenheit(response.data.temperature)
-          : response.data.temperature;
+        let temperature = response.data.temperature;
+        
+        if (this.units === "imperial") {
+          // Convert to Fahrenheit if units are imperial
+          temperature = this._convertToFahrenheit(temperature);
+        }
 
         results[device.host] = {
           temperature: temperature ?? "N/A",
@@ -58,13 +63,5 @@ module.exports = NodeHelper.create({
   // Helper function to convert Celsius to Fahrenheit
   _convertToFahrenheit(celsius) {
     return (celsius * 9/5) + 32;
-  },
-
-  // Helper function to detect if Fahrenheit should be used based on system locale
-  _shouldUseFahrenheit() {
-    const locale = os.locale() || 'en-US'; // Default to 'en-US' if locale is not available
-    const fahrenheitCountries = ['en-US', 'en-PH', 'en-MY', 'en-CA']; // Add more locales using Fahrenheit
-
-    return fahrenheitCountries.includes(locale);
   }
 });
