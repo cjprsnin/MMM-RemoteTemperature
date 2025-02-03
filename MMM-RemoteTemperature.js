@@ -45,11 +45,11 @@ Module.register("MMM-RemoteTemperature", {
       nameEl.innerHTML = `${device.name}: `;
       firstLineEl.appendChild(nameEl);
 
-      if (deviceData && deviceData.temp !== undefined) {
-        const tempEl = document.createElement("span");
-        tempEl.classList = "temp";
-        tempEl.innerHTML = `${deviceData.temp}&deg;C`;
-        firstLineEl.appendChild(tempEl);
+      if (deviceData && deviceData.temperature !== undefined) {
+        const temperatureEl = document.createElement("span");
+        temperatureEl.classList = "temperature";
+        temperatureEl.innerHTML = `${deviceData.temperature}&deg;C`;
+        firstLineEl.appendChild(temperatureEl);
       } else {
         firstLineEl.innerHTML += " No data";
       }
