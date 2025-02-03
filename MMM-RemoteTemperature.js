@@ -1,5 +1,3 @@
-/* global Module */
-
 Module.register("MMM-RemoteTemperature", {
   defaults: {
     devices: [],
@@ -46,10 +44,10 @@ Module.register("MMM-RemoteTemperature", {
       firstLineEl.appendChild(nameEl);
 
       if (deviceData && deviceData.temperature !== undefined) {
-        const temperatureEl = document.createElement("span");
-        temperatureEl.classList = "temperature";
-        temperatureEl.innerHTML = `${deviceData.temperature}&deg;C`;
-        firstLineEl.appendChild(temperatureEl);
+        const tempEl = document.createElement("span");
+        tempEl.classList = "temp";
+        tempEl.innerHTML = `${deviceData.temperature}&deg;`; // No need for unit check, already handled in backend
+        firstLineEl.appendChild(tempEl);
       } else {
         firstLineEl.innerHTML += " No data";
       }
