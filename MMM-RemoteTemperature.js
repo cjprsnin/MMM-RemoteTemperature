@@ -16,13 +16,13 @@ Module.register('MMM-RemoteTemperature', {
 
   start() {
     this.viewModel = {};
-    
+
     // Send the initialization signal to the backend with the units setting and devices configuration
     this.sendSocketNotification('MMM-RemoteTemperature.INIT', {
       devices: this.config.devices,
       units: this.config.units // Ensure the backend gets the globally configured units
     });
-    
+
     // Set an interval to fetch temperature data based on the user-configured interval
     setInterval(() => this._fetchTemperatureData(), this.config.fetchInterval);
   },
