@@ -1,5 +1,5 @@
-const NodeHelper = require("./node_helper");
-const axios = require("axios");
+const axios = require('axios');
+const NodeHelper = require('node_helper');
 
 module.exports = NodeHelper.create({
   start() {
