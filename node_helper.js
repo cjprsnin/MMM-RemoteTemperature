@@ -1,22 +1,22 @@
-const NodeHelper = require("node_helper");
-const axios = require("axios");
+const NodeHelper = require('node_helper');
+const axios = require('axios');
 
 module.exports = NodeHelper.create({
   start() {
-    console.log("[MMM-RemoteTemperature] Node Helper Started.");
+    console.log('[MMM-RemoteTemperature] Node Helper Started.');
     this.devices = [];
     this.viewModel = {};
-    this.units = "metric"; // Default to metric (Celsius)
+    this.units = 'metric'; // Default to metric (Celsius)
     this.fetchInterval = 60000; // Default interval (60 seconds)
   },
 
   socketNotificationReceived(notificationName, payload) {
-    if (notificationName === "MMM-RemoteTemperature.INIT") {
-      console.log("[MMM-RemoteTemperature] Received INIT request. Devices:", payload.devices);
+    if (notificationName === 'MMM-RemoteTemperature.INIT') {
+      console.log('[MMM-RemoteTemperature] Received INIT request. Devices:', payload.devices);
       this.devices = payload.devices;
 
       // Set the units from the frontend config (either 'imperial' or 'metric')
-      this.units = payload.units === "imperial" ? "imperial" : "metric"; // 'imperial' -> Fahrenheit, 'metric' -> Celsius
+      this.units = payload.units === 'imperial' ? 'imperial' : 'metric'; // 'imperial' -> Fahrenheit, 'metric' -> Celsius
 
       // Use the fetchInterval provided in the config or default to 60 seconds
       this.fetchInterval = payload.fetchInterval || 60000; // Default to 60000ms (60 seconds)
@@ -27,21 +27,21 @@ module.exports = NodeHelper.create({
   },
 
   async _fetchTemperatureData() {
-    console.log("[MMM-RemoteTemperature] Fetching temperature data...");
+    console.log('[MMM-RemoteTemperature] Fetching temperature data...');
 
     const results = {};
     let totalTemperature = 0;
     let deviceCount = 0;
 
-    for (const device of this.devices) {
+    await Promise.all(this.devices.map(async (device) => {
       const url = `http://${device.host}:${device.port}/temperature`; // Target API URL
 
       try {
         const response = await axios.get(url, { timeout: 5000 }); // 5s timeout
 
-        let temperature = response.data.temperature;
-        
-        if (this.units === "imperial") {
+        let { temperature } = response.data;
+
+        if (this.units === 'imperial') {
           // Convert to Fahrenheit if units are imperial
           temperature = this._convertToFahrenheit(temperature);
         }
@@ -55,30 +55,30 @@ module.exports = NodeHelper.create({
 
         // Store only the temperature (no additional data)
         results[device.host] = {
-          temperature: temperature ?? "N/A"
+          temperature: temperature ?? 'N/A'
         };
 
       } catch (error) {
         console.error(`[MMM-RemoteTemperature] ERROR fetching from ${url}:`, error.message);
-        results[device.host] = { error: "Unavailable" };
+        results[device.host] = { error: 'Unavailable' };
       }
-    }
+    }));
 
     this.viewModel = results;
 
     // Calculate the average temperature if there are devices with valid data
-    let averageTemperature = "N/A";
+    let averageTemperature = 'N/A';
     if (deviceCount > 0) {
       averageTemperature = this._roundToTwoDecimalPlaces(totalTemperature / deviceCount);
     }
 
     // Emit the average indoor temperature first
-    this.sendSocketNotification("INDOOR_TEMPERATURE", {
+    this.sendSocketNotification('INDOOR_TEMPERATURE', {
       temperature: this._roundToTwoDecimalPlaces(averageTemperature),
     });
-    console.log("[MMM-RemoteTemperature] Sending INDOOR_TEMPERATURE notification:", averageTemperature);
+    console.log('[MMM-RemoteTemperature] Sending INDOOR_TEMPERATURE notification:', averageTemperature);
 
     // Emit the full device data afterward
-    this.sendSocketNotification("MMM-RemoteTemperature.VALUE_RECEIVED", this.viewModel);
+    this.sendSocketNotification('MMM-RemoteTemperature.VALUE_RECEIVED', this.viewModel);
   },
 });
