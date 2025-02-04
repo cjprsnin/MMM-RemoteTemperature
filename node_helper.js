@@ -1,6 +1,7 @@
-const axios = require('axios');
+const NodeHelper = require("node_helper");
+const axios = require("axios");
 
-module.exports = {
+module.exports = NodeHelper.create({
   start() {
     // console.log('[MMM-RemoteTemperature] Node Helper Started.');
     this.devices = [];
@@ -89,4 +90,4 @@ module.exports = {
   _roundToTwoDecimalPlaces(number) {
     return Math.round(number * 100) / 100;
   }
-};
+});
