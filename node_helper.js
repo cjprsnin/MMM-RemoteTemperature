@@ -1,4 +1,4 @@
-const NodeHelper = require("node_helper");
+const NodeHelper = require("./node_helper");
 const axios = require("axios");
 
 module.exports = NodeHelper.create({
@@ -84,7 +84,7 @@ module.exports = NodeHelper.create({
   },
 
   _convertToFahrenheit(celsius) {
-    return (celsius * 9 / 5) + 32;
+    return ((celsius * 9) / 5) + 32;
   },
 
   _roundToTwoDecimalPlaces(number) {
