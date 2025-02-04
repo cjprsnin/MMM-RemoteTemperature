@@ -1,5 +1,5 @@
 const axios = require('axios');
-const NodeHelper = require('node_helper');
+const NodeHelper = require('node_helper'); // eslint-disable-line import/no-unresolved
 
 module.exports = NodeHelper.create({
   start() {
