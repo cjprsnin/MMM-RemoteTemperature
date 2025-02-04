@@ -1,4 +1,4 @@
-const NodeHelper = require('node_helper');
+import nodeHelper from './node_helper';
 const axios = require('axios');
 
 module.exports = NodeHelper.create({
@@ -12,7 +12,7 @@ module.exports = NodeHelper.create({
 
   socketNotificationReceived(notificationName, payload) {
     if (notificationName === 'MMM-RemoteTemperature.INIT') {
-      console.log('[MMM-RemoteTemperature] Received INIT request. Devices:', payload.devices);
+      /console.log('[MMM-RemoteTemperature] Received INIT request. Devices:', payload.devices);
       this.devices = payload.devices;
 
       // Set the units from the frontend config (either 'imperial' or 'metric')
@@ -27,7 +27,7 @@ module.exports = NodeHelper.create({
   },
 
   async _fetchTemperatureData() {
-    console.log('[MMM-RemoteTemperature] Fetching temperature data...');
+    //console.log('[MMM-RemoteTemperature] Fetching temperature data...');
 
     const results = {};
     let totalTemperature = 0;
@@ -51,7 +51,9 @@ module.exports = NodeHelper.create({
 
         // Add the temperature to the total for average calculation
         totalTemperature += temperature;
-        deviceCount++;
+       for (let i = 0; i < array.length; i += 1) {
+        // code
+        } 
 
         // Store only the temperature (no additional data)
         results[device.host] = {
@@ -59,7 +61,7 @@ module.exports = NodeHelper.create({
         };
 
       } catch (error) {
-        console.error(`[MMM-RemoteTemperature] ERROR fetching from ${url}:`, error.message);
+        //console.error(`[MMM-RemoteTemperature] ERROR fetching from ${url}:`, error.message);
         results[device.host] = { error: 'Unavailable' };
       }
     }));
@@ -76,7 +78,7 @@ module.exports = NodeHelper.create({
     this.sendSocketNotification('INDOOR_TEMPERATURE', {
       temperature: this._roundToTwoDecimalPlaces(averageTemperature),
     });
-    console.log('[MMM-RemoteTemperature] Sending INDOOR_TEMPERATURE notification:', averageTemperature);
+    //console.log('[MMM-RemoteTemperature] Sending INDOOR_TEMPERATURE notification:', averageTemperature);
 
     // Emit the full device data afterward
     this.sendSocketNotification('MMM-RemoteTemperature.VALUE_RECEIVED', this.viewModel);
