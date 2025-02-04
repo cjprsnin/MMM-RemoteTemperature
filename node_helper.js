@@ -60,7 +60,9 @@ module.exports = {
         // console.error(`[MMM-RemoteTemperature] ERROR fetching from ${url}:`, error.message);
         results[device.host] = { error: 'Unavailable' };
       }
-    }));
+    })).catch((error) => {
+      console.error('[MMM-RemoteTemperature] Unhandled promise rejection:', error.message);
+    });
 
     this.viewModel = results;
 
@@ -81,7 +83,7 @@ module.exports = {
   },
 
   _convertToFahrenheit(celsius) {
-    return ((celsius * 9) / 5) + 32;
+    return (celsius * 9 / 5) + 32;
   },
 
   _roundToTwoDecimalPlaces(number) {
