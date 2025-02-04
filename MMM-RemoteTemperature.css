@@ -1,21 +1,21 @@
- .mmm-remote-temperature .symbol {
-   margin-right: 15px;
- }
- 
- .mmm-remote-temperature .temp {
-   margin: 0;
- }
- 
- .mmm-remote-temperature .humidity {
-   display: inline-block;
-   margin-left: 15px;
- }
- 
- .mmm-remote-temperature .more {
-   margin: 0;
- }
- 
- .mmm-remote-temperature .more .fa {
-   font-size: 16px;
-   margin-left: 15px;
- }
+.mmm-remote-temperature .symbol {
+  margin-right: 15px;
+}
+
+.mmm-remote-temperature .temp {
+  margin: 0;
+}
+
+.mmm-remote-temperature .humidity {
+  display: inline-block;
+  margin-left: 15px;
+}
+
+.mmm-remote-temperature .more {
+  margin: 0;
+}
+
+.mmm-remote-temperature .more .fa {
+  font-size: 16px;
+  margin-left: 15px;
+}
