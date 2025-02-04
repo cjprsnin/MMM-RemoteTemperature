@@ -81,7 +81,7 @@ module.exports = {
   },
 
   _convertToFahrenheit(celsius) {
-    return (celsius * 9 / 5) + 32;
+    return ((celsius * 9) / 5) + 32;
   },
 
   _roundToTwoDecimalPlaces(number) {
