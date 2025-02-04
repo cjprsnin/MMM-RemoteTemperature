@@ -11,13 +11,6 @@
     "ecmaVersion": 2021,
     "sourceType": "module"
   },
-  "settings": {
-    "import/resolver": {
-      "node": {
-        "extensions": [".js", ".jsx", ".ts", ".tsx"]
-      }
-    }
-  },
   "rules": {
     "comma-dangle": ["error", "never"],
     "linebreak-style": ["off"],
