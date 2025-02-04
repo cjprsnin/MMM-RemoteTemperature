@@ -1,19 +1,30 @@
 {
   "root": true,
   "env": {
-    "browser": true
+    "browser": true,
+    "node": true
   },
   "extends": [
     "airbnb-base"
   ],
   "parserOptions": {
-    "ecmaVersion": 11,
+    "ecmaVersion": 2021,
     "sourceType": "module"
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+      }
+    }
   },
   "rules": {
     "comma-dangle": ["error", "never"],
     "linebreak-style": ["off"],
     "max-len": ["error", { "code": 300 }],
-    "no-underscore-dangle": ["off"]
+    "no-underscore-dangle": ["off"],
+    "quotes": ["error", "single"],
+    "no-console": "warn",
+    "no-trailing-spaces": "error"
   }
 }
