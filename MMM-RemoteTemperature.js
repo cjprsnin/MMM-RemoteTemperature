@@ -29,7 +29,7 @@ Module.register('MMM-RemoteTemperature', {
 
   // Method to fetch temperature data
   _fetchTemperatureData() {
-    console.log('Fetching temperature data...');
+    //console.log('Fetching temperature data...');
     // Add your data fetching logic here (e.g., sending a socket notification to fetch the latest data)
     this.sendSocketNotification('MMM-RemoteTemperature.FETCH_DATA');
   },
