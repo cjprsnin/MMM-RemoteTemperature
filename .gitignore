@@ -59,3 +59,13 @@ typings/
 
 # next.js build output
 .next
+
+# macOS folder attributes
+.DS_Store
+
+# Visual Studio Code workspace settings
+.vscode/
+
+# Build output directories
+dist/
+build/
