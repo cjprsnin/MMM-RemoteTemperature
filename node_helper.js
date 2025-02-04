@@ -56,7 +56,6 @@ module.exports = {
         results[device.host] = {
           temperature: temperature ?? 'N/A'
         };
-
       } catch (error) {
         // console.error(`[MMM-RemoteTemperature] ERROR fetching from ${url}:`, error.message);
         results[device.host] = { error: 'Unavailable' };
@@ -73,7 +72,7 @@ module.exports = {
 
     // Emit the average indoor temperature first
     this.sendSocketNotification('INDOOR_TEMPERATURE', {
-      temperature: averageTemperature,
+      temperature: averageTemperature
     });
     // console.log('[MMM-RemoteTemperature] Sending INDOOR_TEMPERATURE notification:', averageTemperature);
 
