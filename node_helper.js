@@ -1,9 +1,8 @@
-import nodeHelper from './node_helper';
 const axios = require('axios');
 
-module.exports = NodeHelper.create({
+module.exports = {
   start() {
-    console.log('[MMM-RemoteTemperature] Node Helper Started.');
+    // console.log('[MMM-RemoteTemperature] Node Helper Started.');
     this.devices = [];
     this.viewModel = {};
     this.units = 'metric'; // Default to metric (Celsius)
@@ -12,7 +11,7 @@ module.exports = NodeHelper.create({
 
   socketNotificationReceived(notificationName, payload) {
     if (notificationName === 'MMM-RemoteTemperature.INIT') {
-      console.log('[MMM-RemoteTemperature] Received INIT request. Devices:', payload.devices);
+      // console.log('[MMM-RemoteTemperature] Received INIT request. Devices:', payload.devices);
       this.devices = payload.devices;
 
       // Set the units from the frontend config (either 'imperial' or 'metric')
@@ -27,7 +26,7 @@ module.exports = NodeHelper.create({
   },
 
   async _fetchTemperatureData() {
-    console.log('[MMM-RemoteTemperature] Fetching temperature data...');
+    // console.log('[MMM-RemoteTemperature] Fetching temperature data...');
 
     const results = {};
     let totalTemperature = 0;
@@ -59,7 +58,7 @@ module.exports = NodeHelper.create({
         };
 
       } catch (error) {
-        console.error(`[MMM-RemoteTemperature] ERROR fetching from ${url}:`, error.message);
+        // console.error(`[MMM-RemoteTemperature] ERROR fetching from ${url}:`, error.message);
         results[device.host] = { error: 'Unavailable' };
       }
     }));
@@ -76,17 +75,17 @@ module.exports = NodeHelper.create({
     this.sendSocketNotification('INDOOR_TEMPERATURE', {
       temperature: averageTemperature,
     });
-    console.log('[MMM-RemoteTemperature] Sending INDOOR_TEMPERATURE notification:', averageTemperature);
+    // console.log('[MMM-RemoteTemperature] Sending INDOOR_TEMPERATURE notification:', averageTemperature);
 
     // Emit the full device data afterward
     this.sendSocketNotification('MMM-RemoteTemperature.VALUE_RECEIVED', this.viewModel);
   },
 
   _convertToFahrenheit(celsius) {
-    return (celsius * 9/5) + 32;
+    return (celsius * 9 / 5) + 32;
   },
 
   _roundToTwoDecimalPlaces(number) {
     return Math.round(number * 100) / 100;
   }
-});
+};
