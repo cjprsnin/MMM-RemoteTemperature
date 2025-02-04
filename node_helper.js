@@ -26,7 +26,7 @@ module.exports = NodeHelper.create({
     }
   },
 
-async _fetchTemperatureData() {
+  async _fetchTemperatureData() {
     console.log("[MMM-RemoteTemperature] Fetching temperature data...");
 
     const results = {};
@@ -81,3 +81,4 @@ async _fetchTemperatureData() {
     // Emit the full device data afterward
     this.sendSocketNotification("MMM-RemoteTemperature.VALUE_RECEIVED", this.viewModel);
   },
+});
