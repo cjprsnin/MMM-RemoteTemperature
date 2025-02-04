@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [2.0.1]
 
 This is a maintenance release to modernize the development environment. There are no changes in the code of the module so these updates should not affect the functionality of the module.
+
 - Get rid of Grunt, use native npm scripts instead to run the linters.
 - Update all dependencies to the latest versions.
 
@@ -25,6 +26,7 @@ This is a maintenance release that updates all dependencies to the latest versio
 ## [1.2.1]
 
 This is a maintenance release with the following minor changes. None of them affects the functionality of the module, just the tools that are used to build it.
+
 - ADDED: Missing stylelint peer dependency added to package.json.
 - REMOVED: The unused grunt-yamllint package is removed, because there is no yaml file in the project.
 - UPDATED: All packages are updated to the latest version. Lodash is updated to 4.17.11 to eliminate the CVE-2018-16487 security vulnerability in 4.7.10.
