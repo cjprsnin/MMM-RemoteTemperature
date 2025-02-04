@@ -62,7 +62,7 @@ module.exports = NodeHelper.create({
         results[device.host] = { error: 'Unavailable' };
       }
     })).catch((error) => {
-      //console.error('[MMM-RemoteTemperature] Unhandled promise rejection:', error.message);
+      console.error('[MMM-RemoteTemperature] Unhandled promise rejection:', error.message);
     });
 
     this.viewModel = results;
